@@ -3,9 +3,9 @@ package record
 import (
 	"bytes"
 	"fmt"
+	"github.com/ctengiz/xlsReader/helpers"
+	"github.com/ctengiz/xlsReader/xls/structure"
 	"github.com/metakeule/fmtdate"
-	"github.com/shakinm/xlsReader/helpers"
-	"github.com/shakinm/xlsReader/xls/structure"
 	"strconv"
 	"strings"
 )
