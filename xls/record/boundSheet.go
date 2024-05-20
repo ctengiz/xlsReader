@@ -68,5 +68,5 @@ func (r *BoundSheet) GetName() string {
 		return r.stFormat.String()
 	}
 	strLen := int(r.Cch[0])
-	return strings.TrimSpace(string(decodeWindows1251(bytes.Trim(r.Rgch[:int(strLen)], "\x00"))))
+	return strings.TrimSpace(string(decodeWindows1254(bytes.Trim(r.Rgch[:int(strLen)], "\x00"))))
 }

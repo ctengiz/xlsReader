@@ -60,7 +60,12 @@ func (r *LabelBIFF8) GetString() string {
 		runes := utf16.Decode(name)
 		return string(runes)
 	} else {
-		return string(decodeWindows1251(r.rgb[:]))
+		name := []uint16{}
+		for _, b := range r.rgb[:] {
+			name = append(name, uint16(b))
+		}
+		runes := utf16.Decode(name)
+		return string(runes)
 	}
 }
 
@@ -105,7 +110,7 @@ func (r *LabelBIFF5) GetCol() [2]byte {
 
 func (r *LabelBIFF5) GetString() string {
 	strLen := helpers.BytesToUint16(r.cch[:])
-	return strings.TrimSpace(string(decodeWindows1251(r.rgb[:int(strLen)])))
+	return strings.TrimSpace(string(decodeWindows1254(r.rgb[:int(strLen)])))
 }
 
 func (r *LabelBIFF5) GetFloat64() (fl float64) {
@@ -134,8 +139,11 @@ func (r *LabelBIFF5) Read(stream []byte) {
 	copy(r.rgb[:], stream[8:])
 }
 
-func decodeWindows1251(ba []uint8) []uint8 {
-	dec := charmap.Windows1251.NewDecoder()
+// todo: check file's encoding
+//
+//	ie:https://github.com/eidrisov/xlsReader/commit/4f77946935f2b9a6d76e7e8c98b04861ce759b17
+func decodeWindows1254(ba []uint8) []uint8 {
+	dec := charmap.Windows1254.NewDecoder()
 	out, _ := dec.Bytes(ba)
 	return out
 }
