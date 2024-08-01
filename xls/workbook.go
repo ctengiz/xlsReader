@@ -2,6 +2,7 @@ package xls
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"github.com/ctengiz/xlsReader/helpers"
 	"github.com/ctengiz/xlsReader/xls/record"
@@ -51,8 +52,12 @@ func (wb *Workbook) GetFormatByIndex(index int) record.Format {
 }
 
 // GetCodePage - codepage
-func (wb *Workbook) GetCodePage() record.CodePage {
-	return wb.codepage
+func (wb *Workbook) GetCodePage() []byte {
+	return wb.codepage.GetCv()
+}
+
+func (wb *Workbook) GetCodePageInt() int {
+	return int(binary.LittleEndian.Uint16(wb.codepage.GetCv()))
 }
 
 // GetVersionBIFF - version BIFF

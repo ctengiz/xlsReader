@@ -10,6 +10,7 @@ import (
 
 type rw struct {
 	cols map[int]structure.CellData
+	sh   *Sheet
 }
 
 type Sheet struct {
@@ -22,7 +23,7 @@ type Sheet struct {
 }
 
 func (s *Sheet) GetName() string {
-	return s.boundSheet.GetName()
+	return s.boundSheet.GetName(s.wb.GetCodePageInt())
 }
 
 // Get row by index
@@ -136,10 +137,12 @@ Next:
 	if bytes.Compare(recordNumber, record.LabelRecord[:]) == 0 {
 		if bytes.Compare(s.wb.vers[:], record.FlagBIFF8) == 0 {
 			c := new(record.LabelBIFF8)
+			c.SetCodePage(s.wb.GetCodePageInt())
 			c.Read(stream[sPoint : sPoint+recordDataLength])
 			s.addCell(c, c.GetRow(), c.GetCol())
 		} else {
 			c := new(record.LabelBIFF5)
+			c.SetCodePage(s.wb.GetCodePageInt())
 			c.Read(stream[sPoint : sPoint+recordDataLength])
 			s.addCell(c, c.GetRow(), c.GetCol())
 		}
@@ -265,6 +268,7 @@ func (s *Sheet) addCell(cd structure.CellData, row [2]byte, column [2]byte) {
 	}
 	if _, ok := s.rows[r]; !ok {
 		s.rows[r] = new(rw)
+		s.rows[r].sh = s
 
 		if _, ok := s.rows[r].cols[c]; !ok {
 

@@ -2,7 +2,9 @@ package record
 
 import (
 	"github.com/ctengiz/xlsReader/helpers"
+	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/encoding/unicode"
 	"reflect"
 	"strings"
 	"unicode/utf16"
@@ -35,6 +37,8 @@ type LabelBIFF8 struct {
 	cch   [2]byte
 	grbit [1]byte
 	rgb   []byte
+
+	cp int
 }
 
 type LabelBIFF5 struct {
@@ -44,6 +48,8 @@ type LabelBIFF5 struct {
 	cch   [2]byte
 	grbit [1]byte
 	rgb   []byte
+
+	cp int
 }
 
 func (r *LabelBIFF8) GetRow() [2]byte {
@@ -100,6 +106,10 @@ func (r *LabelBIFF8) Read(stream []byte) {
 	copy(r.rgb[:], stream[9:])
 }
 
+func (r *LabelBIFF8) SetCodePage(cp int) {
+	r.cp = cp
+}
+
 func (r *LabelBIFF5) GetRow() [2]byte {
 	return r.rw
 }
@@ -110,7 +120,7 @@ func (r *LabelBIFF5) GetCol() [2]byte {
 
 func (r *LabelBIFF5) GetString() string {
 	strLen := helpers.BytesToUint16(r.cch[:])
-	return strings.TrimSpace(string(decodeWindows1254(r.rgb[:int(strLen)])))
+	return strings.TrimSpace(string(decodeWithCharmap(r.cp, r.rgb[:int(strLen)])))
 }
 
 func (r *LabelBIFF5) GetFloat64() (fl float64) {
@@ -129,7 +139,6 @@ func (r *LabelBIFF5) GetXFIndex() int {
 }
 
 func (r *LabelBIFF5) Read(stream []byte) {
-
 	copy(r.rw[:], stream[:2])
 	copy(r.col[:], stream[2:4])
 	copy(r.ixfe[:], stream[4:6])
@@ -139,11 +148,24 @@ func (r *LabelBIFF5) Read(stream []byte) {
 	copy(r.rgb[:], stream[8:])
 }
 
-// todo: check file's encoding
-//
-//	ie:https://github.com/eidrisov/xlsReader/commit/4f77946935f2b9a6d76e7e8c98b04861ce759b17
-func decodeWindows1254(ba []uint8) []uint8 {
-	dec := charmap.Windows1254.NewDecoder()
+func (r *LabelBIFF5) SetCodePage(cp int) {
+	r.cp = cp
+}
+
+func decodeWithCharmap(cp int, ba []uint8) []uint8 {
+	var dec *encoding.Decoder
+
+	switch cp {
+	case 1254:
+		dec = charmap.Windows1254.NewDecoder()
+	case 8859:
+		dec = charmap.ISO8859_9.NewDecoder()
+	case 10000:
+		dec = unicode.UTF8.NewDecoder()
+		//dec = charmap.Macintosh.NewDecoder()
+	default:
+		dec = charmap.Windows1254.NewDecoder()
+	}
 	out, _ := dec.Bytes(ba)
 	return out
 }

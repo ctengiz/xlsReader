@@ -63,10 +63,11 @@ func (r *BoundSheet) Read(stream []byte, vers []byte) {
 		copy(r.Rgch[:], stream[7:])
 	}
 }
-func (r *BoundSheet) GetName() string {
+func (r *BoundSheet) GetName(cp int) string {
 	if bytes.Compare(r.vers, FlagBIFF8) == 0 {
 		return r.stFormat.String()
 	}
 	strLen := int(r.Cch[0])
-	return strings.TrimSpace(string(decodeWindows1254(bytes.Trim(r.Rgch[:int(strLen)], "\x00"))))
+
+	return strings.TrimSpace(string(decodeWithCharmap(cp, bytes.Trim(r.Rgch[:int(strLen)], "\x00"))))
 }

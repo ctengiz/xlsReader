@@ -60,13 +60,13 @@ func (r *Format) Read(stream []byte, vers []byte) {
 
 }
 
-func (r *Format) String() string {
+func (r *Format) String(cp int) string {
 
 	if bytes.Compare(r.vers, FlagBIFF8) == 0 {
 		return r.stFormat.String()
 	}
 	strLen := helpers.BytesToUint16(r.cch[:])
-	return strings.TrimSpace(string(decodeWindows1254(bytes.Trim(r.rgb[:int(strLen)], "\x00"))))
+	return strings.TrimSpace(string(decodeWithCharmap(cp, bytes.Trim(r.rgb[:int(strLen)], "\x00"))))
 
 }
 
@@ -74,7 +74,7 @@ func (r *Format) GetIndex() int {
 	return int(helpers.BytesToUint16(r.ifmt[:]))
 }
 
-func (r *Format) GetFormatString(data structure.CellData) string {
+func (r *Format) GetFormatString(cp int, data structure.CellData) string {
 	if r.GetIndex() >= 164 {
 
 		if data.GetType() == "*record.LabelSSt" {
@@ -97,17 +97,17 @@ func (r *Format) GetFormatString(data structure.CellData) string {
 		}
 
 		if data.GetType() == "*record.Number" || data.GetType() == "*record.Rk" {
-			if r.String() == "General" || r.String() == "@" {
+			if r.String(cp) == "General" || r.String(cp) == "@" {
 				return strconv.FormatFloat(data.GetFloat64(), 'f', -1, 64)
-			} else if strings.Contains(r.String(), "%") {
+			} else if strings.Contains(r.String(cp), "%") {
 				return fmt.Sprintf("%.2f", data.GetFloat64()*100) + "%"
-			} else if strings.Contains(r.String(), "#") || strings.Contains(r.String(), ".00") {
+			} else if strings.Contains(r.String(cp), "#") || strings.Contains(r.String(cp), ".00") {
 				return fmt.Sprintf("%.2f", data.GetFloat64())
-			} else if strings.Contains(r.String(), "0") {
+			} else if strings.Contains(r.String(cp), "0") {
 				return fmt.Sprintf("%.f", data.GetFloat64())
 			} else {
 				t := helpers.TimeFromExcelTime(data.GetFloat64(), false)
-				dateFormat := strings.ReplaceAll(r.String(), "HH:MM:SS", "hh:mm:ss")
+				dateFormat := strings.ReplaceAll(r.String(cp), "HH:MM:SS", "hh:mm:ss")
 				dateFormat = strings.ReplaceAll(dateFormat, "\\", "")
 				return fmtdate.Format(dateFormat, t)
 			}
